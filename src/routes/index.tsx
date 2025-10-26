@@ -1,8 +1,12 @@
 import Editor from '@monaco-editor/react'
 import { createFileRoute } from '@tanstack/react-router'
 import DOMPurify from 'dompurify'
-import { configureMonacoTailwindcss, tailwindcssData } from 'monaco-tailwindcss'
-import { useEffect, useMemo, useState } from 'react'
+import { configureMonacoTailwindcss, tailwindcssData } from 'monaco-tailwind'
+import type {
+  CssCompilerResult,
+  TailwindHandler,
+} from 'monaco-tailwind/TailwindHandler'
+import { useEffect, useState } from 'react'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import {
   defaultBodyContent,
@@ -14,20 +18,74 @@ export const Route = createFileRoute('/')({
   component: App,
 })
 
+export function extractAllClasses(bodyContent: string): string[] {
+  const regex = /class="([^"]*)"/g
+  const classes: string[] = []
+  let match: RegExpExecArray | null
+
+  while ((match = regex.exec(bodyContent)) !== null) {
+    const classNames = match[1].split(/\s+/).filter(Boolean)
+    classes.push(...classNames)
+  }
+
+  return classes
+}
+
 function App() {
   const [bodyContent, setBodyContent] = useState(defaultBodyContent)
   const [tailwindConfig, setTailwindConfig] = useState(defaultTailwindConfig)
   const [previewKey, setPreviewKey] = useState(0)
   const [activeTab, setActiveTab] = useState<'html' | 'config'>('html')
+  const [tailwindHandler, setTailwindHandler] = useState<TailwindHandler>()
+  const [fullHtml, setFullHtml] = useState('')
 
-  const fullHtml = useMemo(() => {
-    const sanitizedBody = DOMPurify.sanitize(bodyContent, {
-      ADD_TAGS: ['script', 'style', 'link'],
-      ADD_ATTR: ['onclick', 'onload', 'onerror', 'class', 'id', 'href', 'src'],
-    })
+  useEffect(() => {
+    let isMounted = true
 
-    return wrapWithHtmlTemplate(sanitizedBody)
-  }, [bodyContent])
+    const compileHtml = async () => {
+      const sanitizedBody = DOMPurify.sanitize(bodyContent, {
+        ADD_TAGS: ['script', 'style', 'link'],
+        ADD_ATTR: [
+          'onclick',
+          'onload',
+          'onerror',
+          'class',
+          'id',
+          'href',
+          'src',
+        ],
+      })
+
+      if (!tailwindHandler) {
+        if (isMounted) {
+          setFullHtml(wrapWithHtmlTemplate(sanitizedBody, ''))
+        }
+        return
+      }
+
+      let compiledCss: CssCompilerResult | undefined
+      try {
+        const allClasses = extractAllClasses(bodyContent)
+        compiledCss = await tailwindHandler.buildCss(
+          tailwindConfig,
+          allClasses,
+          {},
+        )
+      } catch (error) {
+        console.error('Failed to compile CSS:', error)
+      }
+
+      if (isMounted) {
+        setFullHtml(wrapWithHtmlTemplate(sanitizedBody, compiledCss?.css ?? ''))
+      }
+    }
+
+    compileHtml()
+
+    return () => {
+      isMounted = false
+    }
+  }, [bodyContent, tailwindConfig, tailwindHandler])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -88,9 +146,10 @@ function App() {
                       },
                     },
                   })
-                  configureMonacoTailwindcss(monaco, {
+                  const monacoTailwind = configureMonacoTailwindcss(monaco, {
                     languageSelector: ['html', 'css'],
                   })
+                  setTailwindHandler(monacoTailwind)
                 }}
                 onChange={handleEditorChange}
                 theme="vs-dark"

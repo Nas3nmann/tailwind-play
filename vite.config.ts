@@ -20,7 +20,7 @@ export default defineConfig({
       customWorkers: [
         {
           label: 'tailwindcss',
-          entry: 'monaco-tailwindcss/tailwindcss.worker',
+          entry: 'monaco-tailwind/dist/tailwind.worker',
         },
       ],
     }),
