@@ -20,6 +20,8 @@
     "@tanstack/router-plugin": "^1.132.0",
     "dompurify": "^3.3.0",
     "lucide-react": "^0.545.0",
+    "monaco-editor": "^0.54.0",
+    "monaco-tailwindcss": "^0.6.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-resizable-panels": "^3.0.6",
@@ -38,6 +40,7 @@
     "prettier": "^3.5.3",
     "typescript": "^5.7.2",
     "vite": "^7.1.7",
+    "vite-plugin-monaco-editor": "^1.1.0",
     "vitest": "^3.0.5",
     "web-vitals": "^5.1.0"
   }

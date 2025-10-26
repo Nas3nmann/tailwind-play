@@ -1,12 +1,17 @@
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
+import { loader } from '@monaco-editor/react'
+import * as monaco from 'monaco-editor'
 
 // Import the generated route tree
 import { routeTree } from './routeTree.gen'
 
 import './styles.css'
 import reportWebVitals from './reportWebVitals.ts'
+
+// Configure Monaco loader
+loader.config({ monaco })
 
 // Create a new router instance
 const router = createRouter({

@@ -1,6 +1,7 @@
 import Editor from '@monaco-editor/react'
 import { createFileRoute } from '@tanstack/react-router'
 import DOMPurify from 'dompurify'
+import { configureMonacoTailwindcss, tailwindcssData } from 'monaco-tailwindcss'
 import { useEffect, useMemo, useState } from 'react'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { defaultBodyContent, wrapWithHtmlTemplate } from '../lib/htmlTemplate'
@@ -11,6 +12,7 @@ export const Route = createFileRoute('/')({
 
 function App() {
   const [bodyContent, setBodyContent] = useState(defaultBodyContent)
+  const [tailwindConfig, setTailwindConfig] = useState(undefined)
   const [previewKey, setPreviewKey] = useState(0)
 
   const fullHtml = useMemo(() => {
@@ -43,6 +45,19 @@ function App() {
                 height="100%"
                 defaultLanguage="html"
                 value={bodyContent}
+                beforeMount={(monaco) => {
+                  monaco.languages.css.cssDefaults.setOptions({
+                    data: {
+                      dataProviders: {
+                        tailwindcssData,
+                      },
+                    },
+                  })
+                  configureMonacoTailwindcss(monaco, {
+                    languageSelector: ['html', 'css'],
+                    tailwindConfig: tailwindConfig,
+                  })
+                }}
                 onChange={(value) => setBodyContent(value || '')}
                 theme="vs-dark"
                 options={{
