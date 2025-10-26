@@ -38,11 +38,14 @@ function App() {
   const [activeTab, setActiveTab] = useState<'html' | 'config'>('html')
   const [tailwindHandler, setTailwindHandler] = useState<TailwindHandler>()
   const [fullHtml, setFullHtml] = useState('')
+  const [isCompiling, setIsCompiling] = useState(false)
 
   useEffect(() => {
     let isMounted = true
 
     const compileHtml = async () => {
+      setIsCompiling(true)
+
       const sanitizedBody = DOMPurify.sanitize(bodyContent, {
         ADD_TAGS: ['script', 'style', 'link'],
         ADD_ATTR: [
@@ -56,17 +59,10 @@ function App() {
         ],
       })
 
-      if (!tailwindHandler) {
-        if (isMounted) {
-          setFullHtml(wrapWithHtmlTemplate(sanitizedBody, ''))
-        }
-        return
-      }
-
       let compiledCss: CssCompilerResult | undefined
       try {
         const allClasses = extractAllClasses(bodyContent)
-        compiledCss = await tailwindHandler.buildCss(
+        compiledCss = await tailwindHandler?.buildCss(
           tailwindConfig,
           allClasses,
           {},
@@ -77,6 +73,7 @@ function App() {
 
       if (isMounted) {
         setFullHtml(wrapWithHtmlTemplate(sanitizedBody, compiledCss?.css ?? ''))
+        setIsCompiling(false)
       }
     }
 
@@ -169,6 +166,11 @@ function App() {
         <PanelResizeHandle className="w-1 bg-gray-700 hover:bg-blue-500 transition-colors" />
         <Panel defaultSize={50} minSize={20}>
           <div className="h-full flex flex-col">
+            {isCompiling && (
+              <div className="w-full h-1 bg-gray-700 relative overflow-hidden">
+                <div className="absolute inset-0 bg-blue-500 animate-[loading_1s_ease-in-out_infinite]"></div>
+              </div>
+            )}
             <div className="flex-1">
               <iframe
                 key={previewKey}
