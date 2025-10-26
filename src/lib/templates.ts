@@ -9,6 +9,15 @@ export const defaultBodyContent = `
 </div>
 `
 
+export const defaultTailwindConfig = `/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}`
+
 export function wrapWithHtmlTemplate(bodyContent: string): string {
   return `
   <!DOCTYPE html>
